@@ -1,0 +1,6 @@
+import Database from "better-sqlite3";
+import fs from "node:fs";
+const path=process.env.DATABASE_PATH||"./data/mallow.db"; fs.mkdirSync(new URL("../data/",import.meta.url),{recursive:true});
+export const db=new Database(path); db.pragma("journal_mode = WAL");
+db.exec(`CREATE TABLE IF NOT EXISTS guild_config(guild_id TEXT PRIMARY KEY,json TEXT NOT NULL DEFAULT '{}');CREATE TABLE IF NOT EXISTS warnings(id INTEGER PRIMARY KEY AUTOINCREMENT,guild_id TEXT,user_id TEXT,mod_id TEXT,reason TEXT,created_at INTEGER);CREATE TABLE IF NOT EXISTS xp(guild_id TEXT,user_id TEXT,xp INTEGER DEFAULT 0,level INTEGER DEFAULT 0,PRIMARY KEY(guild_id,user_id));CREATE TABLE IF NOT EXISTS economy(guild_id TEXT,user_id TEXT,balance INTEGER DEFAULT 0,last_daily INTEGER DEFAULT 0,PRIMARY KEY(guild_id,user_id));CREATE TABLE IF NOT EXISTS tickets(channel_id TEXT PRIMARY KEY,guild_id TEXT,owner_id TEXT,status TEXT DEFAULT 'open',claimed_by TEXT);CREATE TABLE IF NOT EXISTS custom_commands(guild_id TEXT,name TEXT,response TEXT,PRIMARY KEY(guild_id,name));`);
+export function config(g){const r=db.prepare("SELECT json FROM guild_config WHERE guild_id=?").get(g);return r?JSON.parse(r.json):{};} export function setConfig(g,c){db.prepare("INSERT INTO guild_config(guild_id,json) VALUES(?,?) ON CONFLICT(guild_id) DO UPDATE SET json=excluded.json").run(g,JSON.stringify(c));}
